@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TrueStore iPhone Lock Check</title>
+<meta name="robots" content="noindex">
+<title>iPhone unbrick</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
+[hidden]{display:none!important}
 :root{
   --bg:#F3F5F8; --panel:#FFFFFF; --ink:#15202C; --ink2:#4A5868; --muted:#7A8796; --line:#DDE2E9;
   --good:#1F9D57; --bad:#D8403A; --pend:#C3CAD3; --accent:#E3262B;
@@ -37,7 +39,7 @@ h1{margin:2px 0 0;font-size:26px;font-weight:700;letter-spacing:-.01em;text-wrap
 .donut svg{width:150px;height:150px;flex:none}
 .donut path{cursor:pointer;transition:opacity .15s}
 .donut path:hover{opacity:.8}
-.center-big{font-size:26px;font-weight:700;fill:var(--ink);font-variant-numeric:tabular-nums}
+.center-big{font-size:23px;font-weight:700;fill:var(--ink);font-variant-numeric:tabular-nums}
 .center-sm{font-size:11px;fill:var(--muted)}
 .legend{display:flex;flex-direction:column;gap:8px;min-width:120px;flex:1}
 .lg{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;font-size:13px;color:var(--ink2)}
@@ -78,31 +80,68 @@ td.sn{font-family:"IBM Plex Mono",ui-monospace,monospace;color:var(--ink)}
 .dot.stale{background:var(--bad)}
 table td:not(:first-child),table th:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
 .err{background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:10px 14px;font-size:13px}
+.hero{border:2px solid transparent;background:linear-gradient(var(--panel),var(--panel)) padding-box,linear-gradient(135deg,#E0403A 0%,#8A4FD8 50%,#2F6FEB 100%) border-box;box-shadow:0 6px 22px -12px rgba(47,111,235,.45)}
+.hero .rate{background:linear-gradient(135deg,#E0403A,#2F6FEB);-webkit-background-clip:text;background-clip:text;color:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip{display:inline-flex;align-items:center}
+.chip .ck{display:inline-block;width:0;overflow:hidden;transition:width .15s;line-height:1}
+.chip[aria-pressed="true"] .ck{width:1.1em}
+#login{min-height:70vh;display:grid;place-items:center}
+.login-card{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px 24px;display:flex;flex-direction:column;gap:14px}
+.login-card h1{font-size:22px;margin:0}
+.login-card input{max-width:none;width:100%;padding:10px 12px;font-size:14px}
+.btn{font:inherit;font-size:14px;font-weight:600;border:0;border-radius:8px;padding:10px 14px;cursor:pointer;color:#fff;background:linear-gradient(135deg,#E0403A,#2F6FEB)}
+.btn:disabled{opacity:.6;cursor:progress}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.linkbtn{font:inherit;font-size:12px;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline;padding:0}
+.lerr{font-size:13px;color:var(--bad);min-height:1.2em}
 </style>
-
 </head>
 <body>
-<div class="wrap">
+
+<section id="login">
+  <form class="login-card" id="loginForm" autocomplete="off">
+    <div class="eyebrow">TrueStore · private dashboard</div>
+    <h1>iPhone unbrick</h1>
+    <label for="pw" class="sub" style="margin:0">Enter the password to view the dashboard.</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn" id="loginBtn" type="submit">Open dashboard</button>
+    <div class="lerr" id="lerr" role="alert"></div>
+  </form>
+</section>
+
+<div class="wrap" id="app" hidden>
   <header>
     <div>
       <div class="eyebrow">TrueStore · imeicheck.com · live</div>
-      <h1>iPhone SimLock &amp; Blacklist Check</h1>
+      <h1>iPhone unbrick</h1>
     </div>
-    <div class="meta">
+    <div class="meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
       <span class="status"><span class="dot" id="dot"></span><span id="updated">Loading…</span></span>
+      <button class="linkbtn" id="logout" type="button">Lock dashboard</button>
     </div>
   </header>
 
   <div class="err" id="err" hidden></div>
 
-  <div class="tools">
-    <label for="fSheet" class="eyebrow" style="margin-right:4px">Sheet</label>
-    <select id="fSheet"><option value="">All sheets</option></select>
-  </div>
+  <div class="chips" id="chips" role="group" aria-label="Filter by sheet"></div>
+
+  <section class="grid">
+    <div class="card hero">
+      <h2>iPhone unbrick rate</h2><div class="sub">Serials with Find My iPhone = ON ÷ all iPhone serials</div>
+      <div class="rate" id="fmRate">–</div>
+      <div class="formula" id="fmFormula"></div>
+      <div class="bar" id="fmBar" role="img"></div>
+      <div class="legend" id="fmLegend" style="flex-direction:row;flex-wrap:wrap;gap:6px 16px"></div>
+    </div>
+    <div class="card"><h2>SimLock status</h2><div class="sub">Unlocked = green · anything else = red</div><div class="donut" id="dSim"></div></div>
+    <div class="card"><h2>Global Blacklist</h2><div class="sub">Clean = green · anything else = red</div><div class="donut" id="dBl"></div></div>
+  </section>
 
   <section class="card prog">
     <div class="prog-head">
-      <div><h2>Checking progress</h2><div class="sub" style="margin-top:2px">iPhone serials checked out of all iPhone serials in the selected sheet(s)</div></div>
+      <div><h2>Checking progress</h2><div class="sub" style="margin-top:2px">iPhone serials checked out of all iPhone serials in the selected sheets</div></div>
       <div class="rate" id="pPct">–</div>
     </div>
     <div class="bar" id="pBar" role="img" style="height:18px"></div>
@@ -114,22 +153,10 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
     </div>
   </section>
 
-  <section class="grid">
-    <div class="card"><h2>SimLock status</h2><div class="sub">Unlocked = green · anything else = red</div><div class="donut" id="dSim"></div></div>
-    <div class="card"><h2>Global Blacklist</h2><div class="sub">Clean = green · anything else = red</div><div class="donut" id="dBl"></div></div>
-    <div class="card">
-      <h2>Find My iPhone ON rate</h2><div class="sub">Serials with Find My = ON ÷ all iPhone serials</div>
-      <div class="rate" id="fmRate">–</div>
-      <div class="formula" id="fmFormula"></div>
-      <div class="bar" id="fmBar" role="img"></div>
-      <div class="legend" id="fmLegend" style="flex-direction:row;flex-wrap:wrap;gap:6px 16px"></div>
-    </div>
-  </section>
-
   <section style="display:flex;flex-direction:column;gap:10px">
     <h2 style="margin:0;font-size:14px">By sheet</h2>
     <div class="tablebox"><table>
-      <thead><tr><th>Sheet</th><th>iPhone serials</th><th>Checked</th><th>% checked</th><th>Unlocked</th><th>Clean</th><th>Find My ON</th><th>ON rate</th></tr></thead>
+      <thead><tr><th>Sheet</th><th>iPhone serials</th><th>Checked</th><th>% checked</th><th>Unlocked</th><th>Clean</th><th>Find My ON</th><th>Unbrick rate</th></tr></thead>
       <tbody id="tb"></tbody>
     </table></div>
     <div class="note">Counts only. Serial numbers stay in the private source sheet and never reach this page.</div>
@@ -139,18 +166,32 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 
 <script>
 // Paste your Apps Script Web app URL here (the one ending in /exec).
-const API = 'https://script.google.com/macros/s/AKfycbySusUtDOx1dzuEitJMzrHWDhr4OpyjrLdP1P86eO1ZxxsQLbEhwbYqOyoe31nnzX-P/exec';
+const API = 'https://script.google.com/macros/s/AKfycbw1amP5HsWqvu7_JWbcm5T8a68ShQM-7PFauL62xbtPZpPwJFWH7QM4pzAV5t-avA8U/exec';
 const REFRESH_MS = 30000;
 
 const $ = id => document.getElementById(id);
 const tip = $('tip');
-let DATA = null;
-try { const s = localStorage.getItem('tosSheet'); if (s !== null) $('fSheet').dataset.want = s; } catch (e) {}
+let DATA = null, PW = '', timer = null;
+let selected = new Set();                         // empty = all sheets
+const store = {
+  get(k){ try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v){ try { sessionStorage.setItem(k, v); } catch (e) {} },
+  del(k){ try { sessionStorage.removeItem(k); } catch (e) {} }
+};
+try { const s = JSON.parse(localStorage.getItem('iuSheets') || '[]'); if (Array.isArray(s)) selected = new Set(s); } catch (e) {}
 
 function showTip(e, t){ tip.textContent = t; tip.style.opacity = 1; tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 12) + 'px'; }
 function hideTip(){ tip.style.opacity = 0; }
 function hover(root){ root.querySelectorAll('[data-t]').forEach(el => { el.addEventListener('mousemove', e => showTip(e, el.dataset.t)); el.addEventListener('mouseleave', hideTip); }); }
 const pct = (a, b) => b ? (a / b * 100).toFixed(1) : '0.0';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function api(password){
+  if (API.indexOf('https://') !== 0) throw new Error('Set the API constant in index.html to your Apps Script Web app URL.');
+  const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                               body: JSON.stringify({ action: 'summary', password }), cache: 'no-store' });
+  return r.json();
+}
 
 function donut(el, goodLabel, good, checked, N){
   const bad = checked - good, pend = N - checked;
@@ -166,8 +207,9 @@ function donut(el, goodLabel, good, checked, N){
     paths += `<path d="M${p(R,s)}A${R} ${R} 0 ${big} 1 ${p(R,e)}L${p(r,e)}A${r} ${r} 0 ${big} 0 ${p(r,s)}Z" fill="${c}" data-t="${lab}: ${v} (${pct(v,N)}%)"/>`;
     a0 += sweep;
   });
+  const center = checked ? (good === checked ? '100' : (Math.floor(good / checked * 1000) / 10).toFixed(1)) + '%' : '–';
   el.innerHTML = `<svg viewBox="0 0 150 150" role="img" aria-label="${goodLabel} ${good} of ${checked} checked">${paths}
-    <text x="75" y="78" text-anchor="middle" class="center-big">${checked ? (good === checked ? '100' : (Math.floor(good / checked * 1000) / 10).toFixed(1)) + '%' : '–'}</text>
+    <text x="75" y="78" text-anchor="middle" class="center-big">${center}</text>
     <text x="75" y="95" text-anchor="middle" class="center-sm">of checked</text></svg>
     <div class="legend">${segs.map(([l,v,c]) => `<div class="lg"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join('')}</div>`;
   hover(el);
@@ -179,19 +221,31 @@ function bar(el, parts, N){
   hover(el);
 }
 
+function renderChips(){
+  const names = DATA.sheets.map(s => s.name);
+  selected = new Set([...selected].filter(n => names.includes(n)));
+  const all = selected.size === 0;
+  $('chips').innerHTML = `<button class="chip" type="button" data-all="1" aria-pressed="${all}"><span class="ck">✓</span>All sheets</button>` +
+    names.map(n => `<button class="chip" type="button" data-name="${esc(n)}" aria-pressed="${selected.has(n)}"><span class="ck">✓</span>${esc(n)}</button>`).join('');
+}
+
+$('chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  if (b.dataset.all) selected.clear();
+  else {
+    const n = b.dataset.name;
+    selected.has(n) ? selected.delete(n) : selected.add(n);
+    if (selected.size === DATA.sheets.length) selected.clear();   // every sheet picked = All
+  }
+  try { localStorage.setItem('iuSheets', JSON.stringify([...selected])); } catch (e) {}
+  renderChips(); render();
+});
+
 function render(){
   if (!DATA) return;
-  const sel = $('fSheet').value;
-  const list = DATA.sheets.filter(s => !sel || s.name === sel);
+  const list = DATA.sheets.filter(s => selected.size === 0 || selected.has(s.name));
   const t = list.reduce((a, s) => { for (const k in s) if (typeof s[k] === 'number') a[k] = (a[k] || 0) + s[k]; return a; }, {});
   const N = t.total || 0, C = t.checked || 0;
-
-  $('pPct').innerHTML = pct(C, N) + '<small>%</small>';
-  $('pDone').textContent = C; $('pLeft').textContent = N - C; $('pTot').textContent = N; $('pSkip').textContent = t.skipped || 0;
-  bar($('pBar'), [['Check complete', C, 'var(--ink2)'], ['Not checked yet', N - C, 'var(--pend)']], N || 1);
-
-  donut($('dSim'), 'Unlocked', t.unlocked || 0, C, N);
-  donut($('dBl'), 'Clean', t.clean || 0, C, N);
 
   const on = t.fmOn || 0, off = t.fmOff || 0, unk = C - on - off;
   $('fmRate').innerHTML = pct(on, N) + '<small>%</small>';
@@ -200,23 +254,24 @@ function render(){
   bar($('fmBar'), fm, N || 1);
   $('fmLegend').innerHTML = fm.map(([l,v,c]) => `<div class="lg" style="grid-template-columns:12px auto auto"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join('');
 
-  $('tb').innerHTML = DATA.sheets.map(s => `<tr><td>${s.name}</td><td>${s.total}</td><td>${s.checked}</td><td>${pct(s.checked, s.total)}%</td><td>${s.unlocked}</td><td>${s.clean}</td><td>${s.fmOn}</td><td>${pct(s.fmOn, s.total)}%</td></tr>`).join('');
+  donut($('dSim'), 'Unlocked', t.unlocked || 0, C, N);
+  donut($('dBl'), 'Clean', t.clean || 0, C, N);
+
+  $('pPct').innerHTML = pct(C, N) + '<small>%</small>';
+  $('pDone').textContent = C; $('pLeft').textContent = N - C; $('pTot').textContent = N; $('pSkip').textContent = t.skipped || 0;
+  bar($('pBar'), [['Check complete', C, 'var(--ink2)'], ['Not checked yet', N - C, 'var(--pend)']], N || 1);
+
+  $('tb').innerHTML = list.map(s => `<tr><td>${esc(s.name)}</td><td>${s.total}</td><td>${s.checked}</td><td>${pct(s.checked, s.total)}%</td><td>${s.unlocked}</td><td>${s.clean}</td><td>${s.fmOn}</td><td>${pct(s.fmOn, s.total)}%</td></tr>`).join('');
 }
 
-function fillSheets(){
-  const f = $('fSheet'), cur = f.value || f.dataset.want || '';
-  f.innerHTML = '<option value="">All sheets</option>' + DATA.sheets.map(s => `<option>${s.name.replace(/</g,'&lt;')}</option>`).join('');
-  f.value = DATA.sheets.some(s => s.name === cur) ? cur : '';
-  delete f.dataset.want;
-}
-
-async function load(){
+async function refresh(){
   try {
-    if (API.indexOf('https://') !== 0) throw new Error('Set the API constant in index.html to your Apps Script Web app URL.');
-    const r = await fetch(API + '?action=summary', { cache: 'no-store' });
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || 'The web app returned an error.');
-    DATA = j; fillSheets(); render();
+    const j = await api(PW);
+    if (!j.ok) {
+      if (j.error === 'wrong_password' || j.error === 'locked') { lock(j.message); return; }
+      throw new Error(j.message || j.error || 'The web app returned an error.');
+    }
+    DATA = j; renderChips(); render();
     $('err').hidden = true; $('dot').className = 'dot';
     $('updated').textContent = 'Updated ' + new Date(j.updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · refreshes every 30 s';
   } catch (e) {
@@ -226,9 +281,34 @@ async function load(){
   }
 }
 
-$('fSheet').addEventListener('change', () => { try { localStorage.setItem('tosSheet', $('fSheet').value); } catch (e) {} render(); });
-load();
-setInterval(load, REFRESH_MS);
+function lock(msg){
+  clearInterval(timer); timer = null; PW = ''; DATA = null; store.del('iuPw');
+  $('app').hidden = true; $('login').hidden = false;
+  $('lerr').textContent = msg || ''; $('pw').value = ''; $('pw').focus();
+}
+
+async function unlock(password, silent){
+  $('loginBtn').disabled = true; $('lerr').textContent = '';
+  try {
+    const j = await api(password);
+    if (!j.ok) { if (!silent) $('lerr').textContent = j.message || 'Could not open the dashboard.'; else lock(); return; }
+    PW = password; store.set('iuPw', password); DATA = j;
+    $('login').hidden = true; $('app').hidden = false;
+    renderChips(); render();
+    $('dot').className = 'dot';
+    $('updated').textContent = 'Updated ' + new Date(j.updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · refreshes every 30 s';
+    timer = setInterval(refresh, REFRESH_MS);
+  } catch (e) {
+    $('lerr').textContent = 'Could not reach the data source: ' + e.message;
+  } finally {
+    $('loginBtn').disabled = false;
+  }
+}
+
+$('loginForm').addEventListener('submit', e => { e.preventDefault(); unlock($('pw').value); });
+$('logout').addEventListener('click', () => lock());
+const saved = store.get('iuPw');
+if (saved) unlock(saved, true); else $('pw').focus();
 </script>
 </body>
 </html>
