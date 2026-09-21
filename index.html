@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta name="dashboard-version" content="v3-workflow-status">
 <title>iPhone unbrick</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -128,7 +129,7 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 
 <section id="login">
   <form class="login-card" id="loginForm" autocomplete="off">
-    <div class="eyebrow">TrueStore · private dashboard</div>
+    <div class="eyebrow">TrueStore · private dashboard · v3</div>
     <h1>iPhone unbrick</h1>
     <label for="pw" class="sub" style="margin:0">Enter the password to view the dashboard.</label>
     <input id="pw" type="password" autocomplete="current-password" required>
@@ -206,14 +207,14 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
       <thead><tr><th>Sheet</th><th>iPhone serials</th><th>Checked</th><th>% checked</th><th>Unlocked</th><th>Clean</th><th>Find My ON</th><th>Unbrick rate</th></tr></thead>
       <tbody id="tb"></tbody>
     </table></div>
-    <div class="note">Counts only. Serial numbers stay in the private source sheet and never reach this page.</div>
+    <div class="note">Counts only. Serial numbers stay in the private source sheet and never reach this page. · Dashboard v3 (workflow status)</div>
   </section>
 </div>
 <div id="tip"></div>
 
 <script>
 // Paste your Apps Script Web app URL here (the one ending in /exec).
-const API = 'PASTE_WEB_APP_URL_HERE';
+const API = 'https://script.google.com/macros/s/AKfycbz2C03tLx93-8ITqVXHSWg6Gigt64cjU7mo7n1K1zedkUrKYy2MuhR-rbHFSIKXFIno/exec';
 const REFRESH_MS = 30000;
 
 // Workflow status groups (matched case-insensitively). Statuses not listed here still appear in the dropdown.
