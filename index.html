@@ -96,6 +96,32 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .linkbtn{font:inherit;font-size:12px;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline;padding:0}
 .lerr{font-size:13px;color:var(--bad);min-height:1.2em}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.filters{display:flex;flex-direction:column;gap:10px}
+.frow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.flabel{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;min-width:118px}
+.gchip{--c:#1F9D57;--cbg:#E4F4EA;--cfg:#fff;border:1.5px solid var(--c);background:var(--cbg);color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.gchip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.gchip[aria-pressed="true"]{background:var(--c);color:var(--cfg)}
+.gchip[aria-pressed="true"]::before{background:var(--cfg)}
+.gchip .n{font-variant-numeric:tabular-nums;opacity:.75;font-size:12px}
+.gchip:focus-visible,.ddbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.g-del{--c:#1F9D57;--cbg:#E4F4EA;--cfg:#fff}
+.g-pend{--c:#E0A800;--cbg:#FFF4CC;--cfg:#2B2100}
+.g-stock{--c:#15202C;--cbg:#ECEFF3;--cfg:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .g-del{--cbg:#16352A}:root:not([data-theme="light"]) .g-pend{--cbg:#3A3010}:root:not([data-theme="light"]) .g-stock{--c:#E8EDF2;--cbg:#232D38;--cfg:#0F151C}}
+:root[data-theme="dark"] .g-del{--cbg:#16352A}:root[data-theme="dark"] .g-pend{--cbg:#3A3010}:root[data-theme="dark"] .g-stock{--c:#E8EDF2;--cbg:#232D38;--cfg:#0F151C}
+.dd{position:relative}
+.ddbtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.ddpanel{position:absolute;z-index:20;top:calc(100% + 6px);left:0;min-width:260px;max-height:320px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px -12px rgba(0,0,0,.35);padding:6px}
+.ddpanel label{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:7px 8px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--ink)}
+.ddpanel label:hover{background:var(--pend-bg)}
+.ddpanel input[type=checkbox]{flex:none;min-width:0;max-width:none;width:16px;height:16px;margin:0;padding:0;accent-color:var(--ink)}
+.ddpanel .n{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+.ddpanel .gdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.ddfoot{display:flex;justify-content:space-between;padding:6px 8px 2px;border-top:1px solid var(--line);margin-top:4px}
+.clear{margin-left:auto}
 </style>
 </head>
 <body>
@@ -125,23 +151,44 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 
   <div class="err" id="err" hidden></div>
 
-  <div class="chips" id="chips" role="group" aria-label="Filter by sheet"></div>
+  <section class="filters" aria-label="Filters">
+    <div class="frow"><span class="flabel">Sheet</span><div class="chips" id="chips" role="group" aria-label="Filter by sheet"></div></div>
+    <div class="frow">
+      <span class="flabel">Workflow status</span>
+      <div class="chips" id="gchips" role="group" aria-label="Filter by workflow status group"></div>
+      <div class="dd">
+        <button class="ddbtn" id="ddBtn" type="button" aria-haspopup="true" aria-expanded="false"><span id="ddLabel">All statuses</span> ▾</button>
+        <div class="ddpanel" id="ddPanel" hidden></div>
+      </div>
+      <button class="linkbtn clear" id="clearFilters" type="button">Clear filters</button>
+    </div>
+  </section>
 
-  <section class="grid">
+  <section class="grid2">
     <div class="card hero">
-      <h2>iPhone unbrick rate</h2><div class="sub">Serials with Find My iPhone = ON ÷ all iPhone serials</div>
+      <h2>iPhone unbrick rate (delivered only)</h2><div class="sub">Find My iPhone = ON ÷ delivered iPhone serials</div>
+      <div class="rate" id="dRate">–</div>
+      <div class="formula" id="dFormula"></div>
+      <div class="bar" id="dBar" role="img"></div>
+      <div class="legend" id="dLegend" style="flex-direction:row;flex-wrap:wrap;gap:6px 16px"></div>
+    </div>
+    <div class="card hero">
+      <h2>iPhone unbrick rate (all inbound items)</h2><div class="sub">Find My iPhone = ON ÷ all iPhone serials in the current filter</div>
       <div class="rate" id="fmRate">–</div>
       <div class="formula" id="fmFormula"></div>
       <div class="bar" id="fmBar" role="img"></div>
       <div class="legend" id="fmLegend" style="flex-direction:row;flex-wrap:wrap;gap:6px 16px"></div>
     </div>
+  </section>
+
+  <section class="grid2">
     <div class="card"><h2>SimLock status</h2><div class="sub">Unlocked = green · anything else = red</div><div class="donut" id="dSim"></div></div>
     <div class="card"><h2>Global Blacklist</h2><div class="sub">Clean = green · anything else = red</div><div class="donut" id="dBl"></div></div>
   </section>
 
   <section class="card prog">
     <div class="prog-head">
-      <div><h2>Checking progress</h2><div class="sub" style="margin-top:2px">iPhone serials checked out of all iPhone serials in the selected sheets</div></div>
+      <div><h2>Checking progress</h2><div class="sub" style="margin-top:2px">iPhone serials checked out of all iPhone serials in the current filter</div></div>
       <div class="rate" id="pPct">–</div>
     </div>
     <div class="bar" id="pBar" role="img" style="height:18px"></div>
@@ -166,25 +213,42 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 
 <script>
 // Paste your Apps Script Web app URL here (the one ending in /exec).
-const API = 'https://script.google.com/macros/s/AKfycbw1amP5HsWqvu7_JWbcm5T8a68ShQM-7PFauL62xbtPZpPwJFWH7QM4pzAV5t-avA8U/exec';
+const API = 'PASTE_WEB_APP_URL_HERE';
 const REFRESH_MS = 30000;
+
+// Workflow status groups (matched case-insensitively). Statuses not listed here still appear in the dropdown.
+const GROUPS = [
+  { id: 'del',   label: 'Delivered',        cls: 'g-del',   color: '#1F9D57', match: s => s === 'delivered' || s.startsWith('sync file to legacy complete') },
+  { id: 'pend',  label: 'Pending Shipment', cls: 'g-pend',  color: '#E0A800', match: s => ['blocked', 'ready to ship', 'shipping'].includes(s) },
+  { id: 'stock', label: 'In stock',         cls: 'g-stock', color: '#15202C', match: s => s === 'not ship out' }
+];
+const norm = s => String(s || '').trim().toLowerCase();
+const groupOf = st => GROUPS.find(g => g.match(norm(st)));
 
 const $ = id => document.getElementById(id);
 const tip = $('tip');
 let DATA = null, PW = '', timer = null;
-let selected = new Set();                         // empty = all sheets
+let selSheets = new Set();     // empty = all sheets
+let selStatus = new Set();     // raw status labels; empty = all statuses
 const store = {
   get(k){ try { return sessionStorage.getItem(k); } catch (e) { return null; } },
   set(k, v){ try { sessionStorage.setItem(k, v); } catch (e) {} },
   del(k){ try { sessionStorage.removeItem(k); } catch (e) {} }
 };
-try { const s = JSON.parse(localStorage.getItem('iuSheets') || '[]'); if (Array.isArray(s)) selected = new Set(s); } catch (e) {}
+try {
+  const f = JSON.parse(localStorage.getItem('iuFilters') || '{}');
+  if (Array.isArray(f.sheets)) selSheets = new Set(f.sheets);
+  if (Array.isArray(f.status)) selStatus = new Set(f.status);
+} catch (e) {}
+function saveFilters(){ try { localStorage.setItem('iuFilters', JSON.stringify({ sheets: [...selSheets], status: [...selStatus] })); } catch (e) {} }
 
 function showTip(e, t){ tip.textContent = t; tip.style.opacity = 1; tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 12) + 'px'; }
 function hideTip(){ tip.style.opacity = 0; }
 function hover(root){ root.querySelectorAll('[data-t]').forEach(el => { el.addEventListener('mousemove', e => showTip(e, el.dataset.t)); el.addEventListener('mouseleave', hideTip); }); }
 const pct = (a, b) => b ? (a / b * 100).toFixed(1) : '0.0';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sum = cells => cells.reduce((a, c) => { ['total','checked','unlocked','clean','fmOn','fmOff','skipped'].forEach(k => a[k] += c[k] || 0); return a; },
+                                  { total: 0, checked: 0, unlocked: 0, clean: 0, fmOn: 0, fmOff: 0, skipped: 0 });
 
 async function api(password){
   if (API.indexOf('https://') !== 0) throw new Error('Set the API constant in index.html to your Apps Script Web app URL.');
@@ -193,6 +257,7 @@ async function api(password){
   return r.json();
 }
 
+/* ---------- charts ---------- */
 function donut(el, goodLabel, good, checked, N){
   const bad = checked - good, pend = N - checked;
   const segs = [[goodLabel, good, 'var(--good)'], ['Other / issue', bad, 'var(--bad)'], ['Not checked', pend, 'var(--pend)']];
@@ -207,6 +272,7 @@ function donut(el, goodLabel, good, checked, N){
     paths += `<path d="M${p(R,s)}A${R} ${R} 0 ${big} 1 ${p(R,e)}L${p(r,e)}A${r} ${r} 0 ${big} 0 ${p(r,s)}Z" fill="${c}" data-t="${lab}: ${v} (${pct(v,N)}%)"/>`;
     a0 += sweep;
   });
+  if (!N) paths = `<circle cx="${cx}" cy="${cy}" r="${(R + r) / 2}" fill="none" stroke="var(--pend)" stroke-width="${R - r}"/>`;
   const center = checked ? (good === checked ? '100' : (Math.floor(good / checked * 1000) / 10).toFixed(1)) + '%' : '–';
   el.innerHTML = `<svg viewBox="0 0 150 150" role="img" aria-label="${goodLabel} ${good} of ${checked} checked">${paths}
     <text x="75" y="78" text-anchor="middle" class="center-big">${center}</text>
@@ -214,56 +280,105 @@ function donut(el, goodLabel, good, checked, N){
     <div class="legend">${segs.map(([l,v,c]) => `<div class="lg"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join('')}</div>`;
   hover(el);
 }
-
 function bar(el, parts, N){
   el.innerHTML = parts.filter(s => s[1]).map(([l,v,c]) => `<span style="width:${v/N*100}%;background:${c}" data-t="${l}: ${v}"></span>`).join('');
   el.setAttribute('aria-label', parts.map(s => s[0] + ' ' + s[1]).join(', '));
   hover(el);
 }
+function rateCard(ids, t){
+  const N = t.total, C = t.checked, on = t.fmOn, off = t.fmOff, unk = C - on - off;
+  $(ids.rate).innerHTML = pct(on, N) + '<small>%</small>';
+  $(ids.formula).textContent = `${on} ON ÷ ${N} serials`;
+  const fm = [['ON', on, 'var(--bad)'], ['OFF', off, 'var(--good)']].concat(unk ? [['Unknown', unk, 'var(--muted)']] : []).concat([['Not checked yet', N - C, 'var(--pend)']]);
+  bar($(ids.bar), fm, N || 1);
+  $(ids.legend).innerHTML = fm.map(([l,v,c]) => `<div class="lg" style="grid-template-columns:12px auto auto"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join('');
+}
 
-function renderChips(){
-  const names = DATA.sheets.map(s => s.name);
-  selected = new Set([...selected].filter(n => names.includes(n)));
-  const all = selected.size === 0;
-  $('chips').innerHTML = `<button class="chip" type="button" data-all="1" aria-pressed="${all}"><span class="ck">✓</span>All sheets</button>` +
-    names.map(n => `<button class="chip" type="button" data-name="${esc(n)}" aria-pressed="${selected.has(n)}"><span class="ck">✓</span>${esc(n)}</button>`).join('');
+/* ---------- filters ---------- */
+const allStatuses = () => { const s = []; DATA.cells.forEach(c => { if (!s.includes(c.status)) s.push(c.status); }); return s; };
+const sheetOk = c => selSheets.size === 0 || selSheets.has(c.sheet);
+const statusOk = c => selStatus.size === 0 || selStatus.has(c.status);
+const statusTotal = st => DATA.cells.filter(c => c.status === st && sheetOk(c)).reduce((a, c) => a + c.total, 0);
+
+function renderSheetChips(){
+  selSheets = new Set([...selSheets].filter(n => DATA.sheets.includes(n)));
+  $('chips').innerHTML = `<button class="chip" type="button" data-all="1" aria-pressed="${selSheets.size === 0}"><span class="ck">✓</span>All sheets</button>` +
+    DATA.sheets.map(n => `<button class="chip" type="button" data-name="${esc(n)}" aria-pressed="${selSheets.has(n)}"><span class="ck">✓</span>${esc(n)}</button>`).join('');
+}
+function renderStatusFilters(){
+  const sts = allStatuses();
+  selStatus = new Set([...selStatus].filter(s => sts.includes(s)));
+  $('gchips').innerHTML = GROUPS.map(g => {
+    const mem = sts.filter(s => g.match(norm(s)));
+    const on = mem.length > 0 && mem.every(s => selStatus.has(s));
+    const n = mem.reduce((a, s) => a + statusTotal(s), 0);
+    return `<button class="gchip ${g.cls}" type="button" data-g="${g.id}" aria-pressed="${on}" ${mem.length ? '' : 'disabled'}>${g.label} <span class="n">${n}</span></button>`;
+  }).join('');
+  const sorted = sts.slice().sort((a, b) => {
+    const ia = GROUPS.findIndex(g => g.match(norm(a))), ib = GROUPS.findIndex(g => g.match(norm(b)));
+    return (ia < 0 ? 9 : ia) - (ib < 0 ? 9 : ib) || a.localeCompare(b);
+  });
+  $('ddPanel').innerHTML = sorted.map((s, i) => {
+    const g = groupOf(s);
+    return `<label for="st${i}"><input type="checkbox" id="st${i}" data-s="${esc(s)}" ${selStatus.has(s) ? 'checked' : ''}>
+      <span><span class="gdot" style="background:${g ? g.color : 'var(--muted)'}"></span>${esc(s)}</span><span class="n">${statusTotal(s)}</span></label>`;
+  }).join('') + `<div class="ddfoot"><button class="linkbtn" type="button" id="ddAll">Select all</button><button class="linkbtn" type="button" id="ddNone">Clear</button></div>`;
+  $('ddLabel').textContent = selStatus.size === 0 ? 'All statuses' : selStatus.size === 1 ? [...selStatus][0] : selStatus.size + ' statuses';
 }
 
 $('chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
-  if (b.dataset.all) selected.clear();
-  else {
-    const n = b.dataset.name;
-    selected.has(n) ? selected.delete(n) : selected.add(n);
-    if (selected.size === DATA.sheets.length) selected.clear();   // every sheet picked = All
-  }
-  try { localStorage.setItem('iuSheets', JSON.stringify([...selected])); } catch (e) {}
-  renderChips(); render();
+  if (b.dataset.all) selSheets.clear();
+  else { const n = b.dataset.name; selSheets.has(n) ? selSheets.delete(n) : selSheets.add(n); if (selSheets.size === DATA.sheets.length) selSheets.clear(); }
+  saveFilters(); renderAll();
 });
+$('gchips').addEventListener('click', e => {
+  const b = e.target.closest('.gchip'); if (!b || b.disabled) return;
+  const g = GROUPS.find(x => x.id === b.dataset.g), mem = allStatuses().filter(s => g.match(norm(s)));
+  const on = mem.every(s => selStatus.has(s));
+  mem.forEach(s => on ? selStatus.delete(s) : selStatus.add(s));
+  if (selStatus.size === allStatuses().length) selStatus.clear();
+  saveFilters(); renderAll();
+});
+$('ddBtn').addEventListener('click', e => { e.stopPropagation(); const p = $('ddPanel'); p.hidden = !p.hidden; $('ddBtn').setAttribute('aria-expanded', String(!p.hidden)); });
+$('ddPanel').addEventListener('click', e => {
+  e.stopPropagation();
+  if (e.target.id === 'ddAll' || e.target.id === 'ddNone') { selStatus.clear(); saveFilters(); renderAll(); return; }
+  const cb = e.target.closest('input[type=checkbox]'); if (!cb) return;
+  cb.checked ? selStatus.add(cb.dataset.s) : selStatus.delete(cb.dataset.s);
+  if (selStatus.size === allStatuses().length) selStatus.clear();
+  saveFilters(); renderAll();
+});
+document.addEventListener('click', () => { $('ddPanel').hidden = true; $('ddBtn').setAttribute('aria-expanded', 'false'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('ddPanel').hidden = true; $('ddBtn').setAttribute('aria-expanded', 'false'); } });
+$('clearFilters').addEventListener('click', () => { selSheets.clear(); selStatus.clear(); saveFilters(); renderAll(); });
 
+/* ---------- render ---------- */
 function render(){
-  if (!DATA) return;
-  const list = DATA.sheets.filter(s => selected.size === 0 || selected.has(s.name));
-  const t = list.reduce((a, s) => { for (const k in s) if (typeof s[k] === 'number') a[k] = (a[k] || 0) + s[k]; return a; }, {});
-  const N = t.total || 0, C = t.checked || 0;
+  const cur = DATA.cells.filter(c => sheetOk(c) && statusOk(c));
+  const t = sum(cur);
+  const del = GROUPS[0];
+  rateCard({ rate: 'dRate', formula: 'dFormula', bar: 'dBar', legend: 'dLegend' }, sum(DATA.cells.filter(c => sheetOk(c) && del.match(norm(c.status)))));
+  rateCard({ rate: 'fmRate', formula: 'fmFormula', bar: 'fmBar', legend: 'fmLegend' }, t);
 
-  const on = t.fmOn || 0, off = t.fmOff || 0, unk = C - on - off;
-  $('fmRate').innerHTML = pct(on, N) + '<small>%</small>';
-  $('fmFormula').textContent = `${on} ON ÷ ${N} serials`;
-  const fm = [['ON', on, 'var(--bad)'], ['OFF', off, 'var(--good)']].concat(unk ? [['Unknown', unk, 'var(--muted)']] : []).concat([['Not checked yet', N - C, 'var(--pend)']]);
-  bar($('fmBar'), fm, N || 1);
-  $('fmLegend').innerHTML = fm.map(([l,v,c]) => `<div class="lg" style="grid-template-columns:12px auto auto"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join('');
+  donut($('dSim'), 'Unlocked', t.unlocked, t.checked, t.total);
+  donut($('dBl'), 'Clean', t.clean, t.checked, t.total);
 
-  donut($('dSim'), 'Unlocked', t.unlocked || 0, C, N);
-  donut($('dBl'), 'Clean', t.clean || 0, C, N);
+  $('pPct').innerHTML = pct(t.checked, t.total) + '<small>%</small>';
+  $('pDone').textContent = t.checked; $('pLeft').textContent = t.total - t.checked; $('pTot').textContent = t.total; $('pSkip').textContent = t.skipped;
+  bar($('pBar'), [['Check complete', t.checked, 'var(--ink2)'], ['Not checked yet', t.total - t.checked, 'var(--pend)']], t.total || 1);
 
-  $('pPct').innerHTML = pct(C, N) + '<small>%</small>';
-  $('pDone').textContent = C; $('pLeft').textContent = N - C; $('pTot').textContent = N; $('pSkip').textContent = t.skipped || 0;
-  bar($('pBar'), [['Check complete', C, 'var(--ink2)'], ['Not checked yet', N - C, 'var(--pend)']], N || 1);
-
-  $('tb').innerHTML = list.map(s => `<tr><td>${esc(s.name)}</td><td>${s.total}</td><td>${s.checked}</td><td>${pct(s.checked, s.total)}%</td><td>${s.unlocked}</td><td>${s.clean}</td><td>${s.fmOn}</td><td>${pct(s.fmOn, s.total)}%</td></tr>`).join('');
+  const rows = DATA.sheets.filter(n => selSheets.size === 0 || selSheets.has(n)).map(n => [n, sum(cur.filter(c => c.sheet === n))]);
+  $('tb').innerHTML = rows.map(([n, s]) => `<tr><td>${esc(n)}</td><td>${s.total}</td><td>${s.checked}</td><td>${pct(s.checked, s.total)}%</td><td>${s.unlocked}</td><td>${s.clean}</td><td>${s.fmOn}</td><td>${pct(s.fmOn, s.total)}%</td></tr>`).join('')
+    || '<tr><td colspan="8" style="text-align:center;padding:20px">No serials match these filters.</td></tr>';
 }
+function renderAll(){ if (!DATA) return; renderSheetChips(); renderStatusFilters(); render(); }
 
+/* ---------- login & refresh ---------- */
+function stamp(j){
+  $('dot').className = 'dot';
+  $('updated').textContent = 'Updated ' + new Date(j.updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · refreshes every 30 s';
+}
 async function refresh(){
   try {
     const j = await api(PW);
@@ -271,32 +386,30 @@ async function refresh(){
       if (j.error === 'wrong_password' || j.error === 'locked') { lock(j.message); return; }
       throw new Error(j.message || j.error || 'The web app returned an error.');
     }
-    DATA = j; renderChips(); render();
-    $('err').hidden = true; $('dot').className = 'dot';
-    $('updated').textContent = 'Updated ' + new Date(j.updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · refreshes every 30 s';
+    if (!Array.isArray(j.cells)) throw new Error('The web app is running an older version. Deploy the latest Code.gs as a new version.');
+    DATA = j; renderAll(); $('err').hidden = true; stamp(j);
   } catch (e) {
     $('dot').className = 'dot stale';
     $('err').textContent = 'Could not load live data: ' + e.message + (DATA ? ' Showing the last loaded numbers.' : '');
     $('err').hidden = false;
   }
 }
-
 function lock(msg){
   clearInterval(timer); timer = null; PW = ''; DATA = null; store.del('iuPw');
   $('app').hidden = true; $('login').hidden = false;
   $('lerr').textContent = msg || ''; $('pw').value = ''; $('pw').focus();
 }
-
 async function unlock(password, silent){
   $('loginBtn').disabled = true; $('lerr').textContent = '';
   try {
     const j = await api(password);
     if (!j.ok) { if (!silent) $('lerr').textContent = j.message || 'Could not open the dashboard.'; else lock(); return; }
-    PW = password; store.set('iuPw', password); DATA = j;
+    PW = password; store.set('iuPw', password);
     $('login').hidden = true; $('app').hidden = false;
-    renderChips(); render();
-    $('dot').className = 'dot';
-    $('updated').textContent = 'Updated ' + new Date(j.updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · refreshes every 30 s';
+    if (!Array.isArray(j.cells)) {
+      $('err').textContent = 'The web app is running an older version. Deploy the latest Code.gs as a new version, then reload this page.';
+      $('err').hidden = false;
+    } else { DATA = j; renderAll(); stamp(j); }
     timer = setInterval(refresh, REFRESH_MS);
   } catch (e) {
     $('lerr').textContent = 'Could not reach the data source: ' + e.message;
@@ -304,7 +417,6 @@ async function unlock(password, silent){
     $('loginBtn').disabled = false;
   }
 }
-
 $('loginForm').addEventListener('submit', e => { e.preventDefault(); unlock($('pw').value); });
 $('logout').addEventListener('click', () => lock());
 const saved = store.get('iuPw');
