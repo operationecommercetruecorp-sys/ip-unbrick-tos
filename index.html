@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TrueStore iPhone Lock Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --panel:#FFFFFF; --ink:#15202C; --ink2:#4A5868; --muted:#7A8796; --line:#DDE2E9;
+  --good:#1F9D57; --bad:#D8403A; --pend:#C3CAD3; --accent:#E3262B;
+  --good-bg:#E4F4EA; --bad-bg:#FBE6E5; --pend-bg:#ECEFF3;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F151C; --panel:#18212B; --ink:#E8EDF2; --ink2:#AEB9C5; --muted:#7F8B98; --line:#2A3542;
+  --good:#3DBE77; --bad:#F0625B; --pend:#3E4A57; --good-bg:#16352A; --bad-bg:#3C1E1F; --pend-bg:#232D38;}}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --panel:#18212B; --ink:#E8EDF2; --ink2:#AEB9C5; --muted:#7F8B98; --line:#2A3542;
+  --good:#3DBE77; --bad:#F0625B; --pend:#3E4A57; --good-bg:#16352A; --bad-bg:#3C1E1F; --pend-bg:#232D38;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{margin:2px 0 0;font-size:26px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.meta{font-size:13px;color:var(--ink2);text-align:right}
+.meta b{color:var(--ink);font-variant-numeric:tabular-nums}
+.progress{height:6px;border-radius:3px;background:var(--pend-bg);overflow:hidden;margin-top:6px;width:220px;margin-left:auto}
+.progress i{display:block;height:100%;background:var(--ink2)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.card h2{margin:0;font-size:14px;font-weight:600}
+.card .sub{font-size:12px;color:var(--muted);margin-top:-10px}
+.donut{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut svg{width:150px;height:150px;flex:none}
+.donut path{cursor:pointer;transition:opacity .15s}
+.donut path:hover{opacity:.8}
+.center-big{font-size:26px;font-weight:700;fill:var(--ink);font-variant-numeric:tabular-nums}
+.center-sm{font-size:11px;fill:var(--muted)}
+.legend{display:flex;flex-direction:column;gap:8px;min-width:120px;flex:1}
+.lg{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;font-size:13px;color:var(--ink2)}
+.lg .sw{width:12px;height:12px;border-radius:3px}
+.lg b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+.rate{font-size:48px;font-weight:700;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rate small{font-size:18px;font-weight:600;color:var(--ink2);margin-left:2px}
+.formula{font:13px "IBM Plex Mono",ui-monospace,monospace;color:var(--ink2)}
+.bar{display:flex;height:14px;border-radius:4px;overflow:hidden;gap:2px;background:var(--panel)}
+.bar span{display:block;height:100%}
+.note{font-size:12px;color:var(--muted)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink2);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select,input{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:5px 10px}
+input{flex:1;min-width:160px;max-width:260px}
+.tablebox{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto;max-height:560px;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{position:sticky;top:0;background:var(--panel);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--ink2)}
+td.sn{font-family:"IBM Plex Mono",ui-monospace,monospace;color:var(--ink)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:500}
+.pill.g{background:var(--good-bg);color:var(--good)}
+.pill.r{background:var(--bad-bg);color:var(--bad)}
+.pill.p{background:var(--pend-bg);color:var(--muted)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:6px;opacity:0;transition:opacity .1s;z-index:10}
+.prog-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:600px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stats div{display:flex;flex-direction:column;gap:2px}
+.stats .k{font-size:12px;color:var(--muted)}
+.stats b{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.count{font-size:12px;color:var(--muted);margin-left:auto}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
+.dot.stale{background:var(--bad)}
+table td:not(:first-child),table th:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.err{background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:10px 14px;font-size:13px}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">TrueStore · imeicheck.com · live</div>
+      <h1>iPhone SimLock &amp; Blacklist Check</h1>
+    </div>
+    <div class="meta">
+      <span class="status"><span class="dot" id="dot"></span><span id="updated">Loading…</span></span>
+    </div>
+  </header>
+
+  <div class="err" id="err" hidden></div>
+
+  <div class="tools">
+    <label for="fSheet" class="eyebrow" style="margin-right:4px">Sheet</label>
+    <select id="fSheet"><option value="">All sheets</option></select>
+  </div>
+
+  <section class="card prog">
+    <div class="prog-head">
+      <div><h2>Checking progress</h2><div class="sub" style="margin-top:2px">iPhone serials checked out of all iPhone serials in the selected sheet(s)</div></div>
+      <div class="rate" id="pPct">–</div>
+    </div>
+    <div class="bar" id="pBar" role="img" style="height:18px"></div>
+    <div class="stats">
+      <div><span class="k">Check complete</span><b id="pDone">–</b></div>
+      <div><span class="k">Not checked yet</span><b id="pLeft">–</b></div>
+      <div><span class="k">Total iPhone serials</span><b id="pTot">–</b></div>
+      <div><span class="k">Skipped (not iPhone)</span><b id="pSkip">–</b></div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card"><h2>SimLock status</h2><div class="sub">Unlocked = green · anything else = red</div><div class="donut" id="dSim"></div></div>
+    <div class="card"><h2>Global Blacklist</h2><div class="sub">Clean = green · anything else = red</div><div class="donut" id="dBl"></div></div>
+    <div class="card">
+      <h2>Find My iPhone ON rate</h2><div class="sub">Serials with Find My = ON ÷ all iPhone serials</div>
+      <div class="rate" id="fmRate">–</div>
+      <div class="formula" id="fmFormula"></div>
+      <div class="bar" id="fmBar" role="img"></div>
+      <div class="legend" id="fmLegend" style="flex-direction:row;flex-wrap:wrap;gap:6px 16px"></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <h2 style="margin:0;font-size:14px">By sheet</h2>
+    <div class="tablebox"><table>
+      <thead><tr><th>Sheet</th><th>iPhone serials</th><th>Checked</th><th>% checked</th><th>Unlocked</th><th>Clean</th><th>Find My ON</th><th>ON rate</th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table></div>
+    <div class="note">Counts only. Serial numbers stay in the private source sheet and never reach this page.</div>
+  </section>
+</div>
+<div id="tip"></div>
+
+<script>
+// Paste your Apps Script Web app URL here (the one ending in /exec).
+const API = 'https://script.google.com/macros/s/AKfycbySusUtDOx1dzuEitJMzrHWDhr4OpyjrLdP1P86eO1ZxxsQLbEhwbYqOyoe31nnzX-P/exec';
+const REFRESH_MS = 30000;
+
+const $ = id => document.getElementById(id);
+const tip = $('tip');
+let DATA = null;
+try { const s = localStorage.getItem('tosSheet'); if (s !== null) $('fSheet').dataset.want = s; } catch (e) {}
+
+function showTip(e, t){ tip.textContent = t; tip.style.opacity = 1; tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 12) + 'px'; }
+function hideTip(){ tip.style.opacity = 0; }
+function hover(root){ root.querySelectorAll('[data-t]').forEach(el => { el.addEventListener('mousemove', e => showTip(e, el.dataset.t)); el.addEventListener('mouseleave', hideTip); }); }
+const pct = (a, b) => b ? (a / b * 100).toFixed(1) : '0.0';
+
+function donut(el, goodLabel, good, checked, N){
+  const bad = checked - good, pend = N - checked;
+  const segs = [[goodLabel, good, 'var(--good)'], ['Other / issue', bad, 'var(--bad)'], ['Not checked', pend, 'var(--pend)']];
+  const R = 66, r = 46, cx = 75, cy = 75; let a0 = -Math.PI / 2;
+  const nz = segs.filter(s => s[1] > 0).length, gap = nz > 1 ? 0.03 : 0;
+  let paths = '';
+  segs.forEach(([lab, v, c]) => {
+    if (!v || !N) return;
+    if (v === N) { paths += `<circle cx="${cx}" cy="${cy}" r="${(R + r) / 2}" fill="none" stroke="${c}" stroke-width="${R - r}" data-t="${lab}: ${v} (100%)"/>`; return; }
+    const sweep = v / N * Math.PI * 2, s = a0 + gap / 2, e = a0 + sweep - gap / 2, big = (e - s) > Math.PI ? 1 : 0;
+    const p = (rad, a) => `${cx + rad * Math.cos(a)} ${cy + rad * Math.sin(a)}`;
+    paths += `<path d="M${p(R,s)}A${R} ${R} 0 ${big} 1 ${p(R,e)}L${p(r,e)}A${r} ${r} 0 ${big} 0 ${p(r,s)}Z" fill="${c}" data-t="${lab}: ${v} (${pct(v,N)}%)"/>`;
+    a0 += sweep;
+  });
+  el.innerHTML = `<svg viewBox="0 0 150 150" role="img" aria-label="${goodLabel} ${good} of ${checked} checked">${paths}
+    <text x="75" y="78" text-anchor="middle" class="center-big">${checked ? (good === checked ? '100' : (Math.floor(good / checked * 1000) / 10).toFixed(1)) + '%' : '–'}</text>
+    <text x="75" y="95" text-anchor="middle" class="center-sm">of checked</text></svg>
+    <div class="legend">${segs.map(([l,v,c]) => `<div class="lg"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join('')}</div>`;
+  hover(el);
+}
+
+function bar(el, parts, N){
+  el.innerHTML = parts.filter(s => s[1]).map(([l,v,c]) => `<span style="width:${v/N*100}%;background:${c}" data-t="${l}: ${v}"></span>`).join('');
+  el.setAttribute('aria-label', parts.map(s => s[0] + ' ' + s[1]).join(', '));
+  hover(el);
+}
+
+function render(){
+  if (!DATA) return;
+  const sel = $('fSheet').value;
+  const list = DATA.sheets.filter(s => !sel || s.name === sel);
+  const t = list.reduce((a, s) => { for (const k in s) if (typeof s[k] === 'number') a[k] = (a[k] || 0) + s[k]; return a; }, {});
+  const N = t.total || 0, C = t.checked || 0;
+
+  $('pPct').innerHTML = pct(C, N) + '<small>%</small>';
+  $('pDone').textContent = C; $('pLeft').textContent = N - C; $('pTot').textContent = N; $('pSkip').textContent = t.skipped || 0;
+  bar($('pBar'), [['Check complete', C, 'var(--ink2)'], ['Not checked yet', N - C, 'var(--pend)']], N || 1);
+
+  donut($('dSim'), 'Unlocked', t.unlocked || 0, C, N);
+  donut($('dBl'), 'Clean', t.clean || 0, C, N);
+
+  const on = t.fmOn || 0, off = t.fmOff || 0, unk = C - on - off;
+  $('fmRate').innerHTML = pct(on, N) + '<small>%</small>';
+  $('fmFormula').textContent = `${on} ON ÷ ${N} serials`;
+  const fm = [['ON', on, 'var(--bad)'], ['OFF', off, 'var(--good)']].concat(unk ? [['Unknown', unk, 'var(--muted)']] : []).concat([['Not checked yet', N - C, 'var(--pend)']]);
+  bar($('fmBar'), fm, N || 1);
+  $('fmLegend').innerHTML = fm.map(([l,v,c]) => `<div class="lg" style="grid-template-columns:12px auto auto"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join('');
+
+  $('tb').innerHTML = DATA.sheets.map(s => `<tr><td>${s.name}</td><td>${s.total}</td><td>${s.checked}</td><td>${pct(s.checked, s.total)}%</td><td>${s.unlocked}</td><td>${s.clean}</td><td>${s.fmOn}</td><td>${pct(s.fmOn, s.total)}%</td></tr>`).join('');
+}
+
+function fillSheets(){
+  const f = $('fSheet'), cur = f.value || f.dataset.want || '';
+  f.innerHTML = '<option value="">All sheets</option>' + DATA.sheets.map(s => `<option>${s.name.replace(/</g,'&lt;')}</option>`).join('');
+  f.value = DATA.sheets.some(s => s.name === cur) ? cur : '';
+  delete f.dataset.want;
+}
+
+async function load(){
+  try {
+    if (API.indexOf('https://') !== 0) throw new Error('Set the API constant in index.html to your Apps Script Web app URL.');
+    const r = await fetch(API + '?action=summary', { cache: 'no-store' });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'The web app returned an error.');
+    DATA = j; fillSheets(); render();
+    $('err').hidden = true; $('dot').className = 'dot';
+    $('updated').textContent = 'Updated ' + new Date(j.updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · refreshes every 30 s';
+  } catch (e) {
+    $('dot').className = 'dot stale';
+    $('err').textContent = 'Could not load live data: ' + e.message + (DATA ? ' Showing the last loaded numbers.' : '');
+    $('err').hidden = false;
+  }
+}
+
+$('fSheet').addEventListener('change', () => { try { localStorage.setItem('tosSheet', $('fSheet').value); } catch (e) {} render(); });
+load();
+setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>
