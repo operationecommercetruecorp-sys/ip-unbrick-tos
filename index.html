@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="dashboard-version" content="v4-purple-off-blocked">
+<meta name="dashboard-version" content="v5-model-capacity">
 <title>iPhone unbrick</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -113,6 +113,15 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 .g-stock{--c:#15202C;--cbg:#ECEFF3;--cfg:#fff}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .g-del{--cbg:#16352A}:root:not([data-theme="light"]) .g-pend{--cbg:#3A3010}:root:not([data-theme="light"]) .g-stock{--c:#E8EDF2;--cbg:#232D38;--cfg:#0F151C}}
 :root[data-theme="dark"] .g-del{--cbg:#16352A}:root[data-theme="dark"] .g-pend{--cbg:#3A3010}:root[data-theme="dark"] .g-stock{--c:#E8EDF2;--cbg:#232D38;--cfg:#0F151C}
+.mchip{--mc:#E8F2FF;--mfg:#0B2A4A;--mbd:#9CC3F5;background:var(--mc);color:var(--mfg);border:1.5px solid var(--mbd);border-radius:999px;padding:5px 12px 5px 9px;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;opacity:.6;transition:opacity .15s,box-shadow .15s}
+.mchip svg{width:14px;height:14px;flex:none}
+.mchip .n{font-variant-numeric:tabular-nums;opacity:.75;font-size:12px}
+.mchip[aria-pressed="true"]{opacity:1;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--mbd)}
+.mchip:hover{opacity:.9}
+.mchip:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.m-pro{--mc:#E8F2FF;--mfg:#0B2A4A;--mbd:#7FB0EE}
+.m-promax{--mc:#4D1821;--mfg:#FFFFFF;--mbd:#4D1821}
+.m-other{--mc:var(--pend-bg);--mfg:var(--ink);--mbd:var(--line)}
 .dd{position:relative}
 .ddbtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
 .ddpanel{position:absolute;z-index:20;top:calc(100% + 6px);left:0;min-width:260px;max-height:320px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px -12px rgba(0,0,0,.35);padding:6px}
@@ -129,7 +138,7 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 
 <section id="login">
   <form class="login-card" id="loginForm" autocomplete="off">
-    <div class="eyebrow">TrueStore · private dashboard · v4</div>
+    <div class="eyebrow">TrueStore · private dashboard · v5</div>
     <h1>iPhone unbrick</h1>
     <label for="pw" class="sub" style="margin:0">Enter the password to view the dashboard.</label>
     <input id="pw" type="password" autocomplete="current-password" required>
@@ -154,6 +163,8 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 
   <section class="filters" aria-label="Filters">
     <div class="frow"><span class="flabel">Sheet</span><div class="chips" id="chips" role="group" aria-label="Filter by sheet"></div></div>
+    <div class="frow"><span class="flabel">Model</span><div class="chips" id="mchips" role="group" aria-label="Filter by model"></div></div>
+    <div class="frow"><span class="flabel">Capacity</span><div class="chips" id="cchips" role="group" aria-label="Filter by capacity"></div></div>
     <div class="frow">
       <span class="flabel">Workflow status</span>
       <div class="chips" id="gchips" role="group" aria-label="Filter by workflow status group"></div>
@@ -207,14 +218,14 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
       <thead><tr><th>Sheet</th><th>iPhone serials</th><th>Checked</th><th>% checked</th><th>Unlocked</th><th>Clean</th><th>Find My ON</th><th>Unbrick rate</th></tr></thead>
       <tbody id="tb"></tbody>
     </table></div>
-    <div class="note">Counts only. Serial numbers stay in the private source sheet and never reach this page. · Dashboard v4</div>
+    <div class="note">Counts only. Serial numbers stay in the private source sheet and never reach this page. · Dashboard v5</div>
   </section>
 </div>
 <div id="tip"></div>
 
 <script>
 // Paste your Apps Script Web app URL here (the one ending in /exec).
-const API = 'https://script.google.com/macros/s/AKfycbz2C03tLx93-8ITqVXHSWg6Gigt64cjU7mo7n1K1zedkUrKYy2MuhR-rbHFSIKXFIno/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwHuL8GtwREu0du1MogkpFJkCchP1mfVg_3nyjsHtvqPTcstsLjFJhP13gRaBDTkwiw/exec';
 const REFRESH_MS = 30000;
 
 // Workflow status groups (matched case-insensitively). Statuses not listed here still appear in the dropdown.
@@ -233,6 +244,12 @@ const tip = $('tip');
 let DATA = null, PW = '', timer = null;
 let selSheets = new Set();     // empty = all sheets
 let selStatus = new Set();     // raw status labels; empty = all statuses
+let selModel = new Set();      // empty = all models
+let selCap = new Set();        // empty = all capacities
+const MODELS = [ { id: 'iPhone 18 Pro', cls: 'm-pro' }, { id: 'iPhone 18 Pro Max', cls: 'm-promax' } ];
+const CAPS = ['256GB', '512GB', '1TB', '2TB'];
+const PHONE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="10" y="4.5" width="4" height="1.4" rx=".7" fill="currentColor"/></svg>';
+const modelOf = c => c.model || 'Other', capOf = c => c.capacity || 'Other';
 const store = {
   get(k){ try { return sessionStorage.getItem(k); } catch (e) { return null; } },
   set(k, v){ try { sessionStorage.setItem(k, v); } catch (e) {} },
@@ -242,8 +259,10 @@ try {
   const f = JSON.parse(localStorage.getItem('iuFilters') || '{}');
   if (Array.isArray(f.sheets)) selSheets = new Set(f.sheets);
   if (Array.isArray(f.status)) selStatus = new Set(f.status);
+  if (Array.isArray(f.model)) selModel = new Set(f.model);
+  if (Array.isArray(f.cap)) selCap = new Set(f.cap);
 } catch (e) {}
-function saveFilters(){ try { localStorage.setItem('iuFilters', JSON.stringify({ sheets: [...selSheets], status: [...selStatus] })); } catch (e) {} }
+function saveFilters(){ try { localStorage.setItem('iuFilters', JSON.stringify({ sheets: [...selSheets], status: [...selStatus], model: [...selModel], cap: [...selCap] })); } catch (e) {} }
 
 function showTip(e, t){ tip.textContent = t; tip.style.opacity = 1; tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 12) + 'px'; }
 function hideTip(){ tip.style.opacity = 0; }
@@ -301,20 +320,42 @@ function rateCard(ids, t){
 const allStatuses = () => { const s = []; DATA.cells.forEach(c => { if (!s.includes(c.status)) s.push(c.status); }); return s; };
 const sheetOk = c => selSheets.size === 0 || selSheets.has(c.sheet);
 const statusOk = c => selStatus.size === 0 || selStatus.has(c.status);
-const statusTotal = st => DATA.cells.filter(c => c.status === st && sheetOk(c)).reduce((a, c) => a + c.total, 0);
+const modelOk = c => (selModel.size === 0 || selModel.has(modelOf(c))) && (selCap.size === 0 || selCap.has(capOf(c)));
+const statusTotal = st => DATA.cells.filter(c => c.status === st && sheetOk(c) && modelOk(c)).reduce((a, c) => a + c.total, 0);
 
 function renderSheetChips(){
   selSheets = new Set([...selSheets].filter(n => DATA.sheets.includes(n)));
   $('chips').innerHTML = `<button class="chip" type="button" data-all="1" aria-pressed="${selSheets.size === 0}"><span class="ck">✓</span>All sheets</button>` +
     DATA.sheets.map(n => `<button class="chip" type="button" data-name="${esc(n)}" aria-pressed="${selSheets.has(n)}"><span class="ck">✓</span>${esc(n)}</button>`).join('');
 }
+function renderProductFilters(){
+  const base = DATA.cells.filter(c => sheetOk(c) && statusOk(c));
+  const models = MODELS.slice(); if (base.some(c => modelOf(c) === 'Other' && c.total)) models.push({ id: 'Other', cls: 'm-other' });
+  $('mchips').innerHTML = `<button class="chip" type="button" data-mall="1" aria-pressed="${selModel.size === 0}"><span class="ck">✓</span>All models</button>` +
+    models.map(m => { const n = base.filter(c => modelOf(c) === m.id && (selCap.size === 0 || selCap.has(capOf(c)))).reduce((a, c) => a + c.total, 0);
+      return `<button class="mchip ${m.cls}" type="button" data-m="${esc(m.id)}" aria-pressed="${selModel.has(m.id)}">${PHONE_ICON}${esc(m.id)} <span class="n">${n}</span></button>`; }).join('');
+  const caps = CAPS.slice(); base.forEach(c => { const k = capOf(c); if (c.total && !caps.includes(k)) caps.push(k); });
+  $('cchips').innerHTML = `<button class="chip" type="button" data-call="1" aria-pressed="${selCap.size === 0}"><span class="ck">✓</span>All capacities</button>` +
+    caps.map(k => { const n = base.filter(c => capOf(c) === k && (selModel.size === 0 || selModel.has(modelOf(c)))).reduce((a, c) => a + c.total, 0);
+      return `<button class="chip" type="button" data-c="${esc(k)}" aria-pressed="${selCap.has(k)}"><span class="ck">✓</span>${esc(k)} <span class="n" style="opacity:.7;font-size:12px;margin-left:5px">${n}</span></button>`; }).join('');
+}
+$('mchips').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.mall) selModel.clear(); else { const m = b.dataset.m; selModel.has(m) ? selModel.delete(m) : selModel.add(m); }
+  saveFilters(); renderAll();
+});
+$('cchips').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.call) selCap.clear(); else { const k = b.dataset.c; selCap.has(k) ? selCap.delete(k) : selCap.add(k); }
+  saveFilters(); renderAll();
+});
 function renderStatusFilters(){
   const sts = allStatuses();
   selStatus = new Set([...selStatus].filter(s => sts.includes(s)));
   $('gchips').innerHTML = GROUPS.map(g => {
     const mem = sts.filter(s => g.match(norm(s)));
     const on = mem.length > 0 && mem.every(s => selStatus.has(s));
-    const n = mem.reduce((a, s) => a + statusTotal(s), 0);
+    const n = mem.reduce((a, s) => a + statusTotal(s), 0);   // follows sheet + model + capacity filters
     return `<button class="gchip ${g.cls}" type="button" data-g="${g.id}" aria-pressed="${on}" ${mem.length ? '' : 'disabled'}>${g.label} <span class="n">${n}</span></button>`;
   }).join('');
   const sorted = sts.slice().sort((a, b) => {
@@ -354,14 +395,14 @@ $('ddPanel').addEventListener('click', e => {
 });
 document.addEventListener('click', () => { $('ddPanel').hidden = true; $('ddBtn').setAttribute('aria-expanded', 'false'); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('ddPanel').hidden = true; $('ddBtn').setAttribute('aria-expanded', 'false'); } });
-$('clearFilters').addEventListener('click', () => { selSheets.clear(); selStatus.clear(); saveFilters(); renderAll(); });
+$('clearFilters').addEventListener('click', () => { selSheets.clear(); selStatus.clear(); selModel.clear(); selCap.clear(); saveFilters(); renderAll(); });
 
 /* ---------- render ---------- */
 function render(){
-  const cur = DATA.cells.filter(c => sheetOk(c) && statusOk(c));
+  const cur = DATA.cells.filter(c => sheetOk(c) && statusOk(c) && modelOk(c));
   const t = sum(cur);
   const del = GROUPS[0];
-  rateCard({ rate: 'dRate', formula: 'dFormula', bar: 'dBar', legend: 'dLegend' }, sum(DATA.cells.filter(c => sheetOk(c) && inDeliveredRate(c.status))));
+  rateCard({ rate: 'dRate', formula: 'dFormula', bar: 'dBar', legend: 'dLegend' }, sum(DATA.cells.filter(c => sheetOk(c) && modelOk(c) && inDeliveredRate(c.status))));
   rateCard({ rate: 'fmRate', formula: 'fmFormula', bar: 'fmBar', legend: 'fmLegend' }, t);
 
   donut($('dSim'), 'Unlocked', t.unlocked, t.checked, t.total);
@@ -375,7 +416,7 @@ function render(){
   $('tb').innerHTML = rows.map(([n, s]) => `<tr><td>${esc(n)}</td><td>${s.total}</td><td>${s.checked}</td><td>${pct(s.checked, s.total)}%</td><td>${s.unlocked}</td><td>${s.clean}</td><td>${s.fmOn}</td><td>${pct(s.fmOn, s.total)}%</td></tr>`).join('')
     || '<tr><td colspan="8" style="text-align:center;padding:20px">No serials match these filters.</td></tr>';
 }
-function renderAll(){ if (!DATA) return; renderSheetChips(); renderStatusFilters(); render(); }
+function renderAll(){ if (!DATA) return; renderSheetChips(); renderProductFilters(); renderStatusFilters(); render(); }
 
 /* ---------- login & refresh ---------- */
 function stamp(j){
