@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="dashboard-version" content="v3-workflow-status">
+<meta name="dashboard-version" content="v4-purple-off-blocked">
 <title>iPhone unbrick</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -13,14 +13,14 @@
 :root{
   --bg:#F3F5F8; --panel:#FFFFFF; --ink:#15202C; --ink2:#4A5868; --muted:#7A8796; --line:#DDE2E9;
   --good:#1F9D57; --bad:#D8403A; --pend:#C3CAD3; --accent:#E3262B;
-  --good-bg:#E4F4EA; --bad-bg:#FBE6E5; --pend-bg:#ECEFF3;
+  --good-bg:#E4F4EA; --off:#7B4FD6; --bad-bg:#FBE6E5; --pend-bg:#ECEFF3;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0F151C; --panel:#18212B; --ink:#E8EDF2; --ink2:#AEB9C5; --muted:#7F8B98; --line:#2A3542;
-  --good:#3DBE77; --bad:#F0625B; --pend:#3E4A57; --good-bg:#16352A; --bad-bg:#3C1E1F; --pend-bg:#232D38;}}
+  --good:#3DBE77; --bad:#F0625B; --pend:#3E4A57; --off:#A98BF0; --good-bg:#16352A; --bad-bg:#3C1E1F; --pend-bg:#232D38;}}
 :root[data-theme="dark"]{
   --bg:#0F151C; --panel:#18212B; --ink:#E8EDF2; --ink2:#AEB9C5; --muted:#7F8B98; --line:#2A3542;
-  --good:#3DBE77; --bad:#F0625B; --pend:#3E4A57; --good-bg:#16352A; --bad-bg:#3C1E1F; --pend-bg:#232D38;}
+  --good:#3DBE77; --bad:#F0625B; --pend:#3E4A57; --off:#A98BF0; --good-bg:#16352A; --bad-bg:#3C1E1F; --pend-bg:#232D38;}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font:14px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px;padding-block:28px 48px}
 .wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
@@ -129,7 +129,7 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 
 <section id="login">
   <form class="login-card" id="loginForm" autocomplete="off">
-    <div class="eyebrow">TrueStore · private dashboard · v3</div>
+    <div class="eyebrow">TrueStore · private dashboard · v4</div>
     <h1>iPhone unbrick</h1>
     <label for="pw" class="sub" style="margin:0">Enter the password to view the dashboard.</label>
     <input id="pw" type="password" autocomplete="current-password" required>
@@ -167,7 +167,7 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
 
   <section class="grid2">
     <div class="card hero">
-      <h2>iPhone unbrick rate (delivered only)</h2><div class="sub">Find My iPhone = ON ÷ delivered iPhone serials</div>
+      <h2>iPhone unbrick rate (delivered only)</h2><div class="sub">Find My iPhone = ON ÷ iPhone serials that are Delivered, Sync File To Legacy Completed or Blocked</div>
       <div class="rate" id="dRate">–</div>
       <div class="formula" id="dFormula"></div>
       <div class="bar" id="dBar" role="img"></div>
@@ -207,7 +207,7 @@ table td:not(:first-child),table th:not(:first-child){text-align:right;font-vari
       <thead><tr><th>Sheet</th><th>iPhone serials</th><th>Checked</th><th>% checked</th><th>Unlocked</th><th>Clean</th><th>Find My ON</th><th>Unbrick rate</th></tr></thead>
       <tbody id="tb"></tbody>
     </table></div>
-    <div class="note">Counts only. Serial numbers stay in the private source sheet and never reach this page. · Dashboard v3 (workflow status)</div>
+    <div class="note">Counts only. Serial numbers stay in the private source sheet and never reach this page. · Dashboard v4</div>
   </section>
 </div>
 <div id="tip"></div>
@@ -225,6 +225,8 @@ const GROUPS = [
 ];
 const norm = s => String(s || '').trim().toLowerCase();
 const groupOf = st => GROUPS.find(g => g.match(norm(st)));
+// 'iPhone unbrick rate (delivered only)' counts the Delivered group plus Blocked
+const inDeliveredRate = st => GROUPS[0].match(norm(st)) || norm(st) === 'blocked';
 
 const $ = id => document.getElementById(id);
 const tip = $('tip');
@@ -290,7 +292,7 @@ function rateCard(ids, t){
   const N = t.total, C = t.checked, on = t.fmOn, off = t.fmOff, unk = C - on - off;
   $(ids.rate).innerHTML = pct(on, N) + '<small>%</small>';
   $(ids.formula).textContent = `${on} ON ÷ ${N} serials`;
-  const fm = [['ON', on, 'var(--bad)'], ['OFF', off, 'var(--good)']].concat(unk ? [['Unknown', unk, 'var(--muted)']] : []).concat([['Not checked yet', N - C, 'var(--pend)']]);
+  const fm = [['ON', on, 'var(--bad)'], ['OFF', off, 'var(--off)']].concat(unk ? [['Unknown', unk, 'var(--muted)']] : []).concat([['Not checked yet', N - C, 'var(--pend)']]);
   bar($(ids.bar), fm, N || 1);
   $(ids.legend).innerHTML = fm.map(([l,v,c]) => `<div class="lg" style="grid-template-columns:12px auto auto"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join('');
 }
@@ -359,7 +361,7 @@ function render(){
   const cur = DATA.cells.filter(c => sheetOk(c) && statusOk(c));
   const t = sum(cur);
   const del = GROUPS[0];
-  rateCard({ rate: 'dRate', formula: 'dFormula', bar: 'dBar', legend: 'dLegend' }, sum(DATA.cells.filter(c => sheetOk(c) && del.match(norm(c.status)))));
+  rateCard({ rate: 'dRate', formula: 'dFormula', bar: 'dBar', legend: 'dLegend' }, sum(DATA.cells.filter(c => sheetOk(c) && inDeliveredRate(c.status))));
   rateCard({ rate: 'fmRate', formula: 'fmFormula', bar: 'fmBar', legend: 'fmLegend' }, t);
 
   donut($('dSim'), 'Unlocked', t.unlocked, t.checked, t.total);
